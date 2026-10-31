@@ -1,0 +1,26 @@
+name: Deploy Infra
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write   # Required to fetch the OIDC token
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::221305307638:role/github-actions-terraform-role
+          aws-region: us-east-2
+
+      - name: Check AWS Connection
+        run: aws sts get-caller-identity
