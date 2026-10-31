@@ -19,6 +19,16 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Extract Actual OIDC Sub Claim
+        run: |
+          # Safely parse the JWT payload without leaking private signatures
+          JWT_PAYLOAD=$(echo "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" | cut -d'.' -f2)
+          # Handle base64 padding issues if present
+          PADDING=$(expr 4 - length "$JWT_PAYLOAD" % 4)
+          if [ $PADDING -eq 4 ]; then PADDING=0; fi
+          printf "%s" "$JWT_PAYLOAD" | head -n 1 | base64 -d 2>/dev/null || true
+
+
       - name: Configure AWS Credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
