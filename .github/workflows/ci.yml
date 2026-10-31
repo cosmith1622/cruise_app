@@ -1,5 +1,5 @@
 name: Deploy Infra
-
+#remove the github extentions
 on:
   push:
     branches:
