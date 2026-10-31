@@ -34,6 +34,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::221305307638:role/github-actions-terraform-role
           aws-region: us-east-2
+          audience: ://amazonaws.com
 
       - name: Check AWS Connection
         run: aws sts get-caller-identity
