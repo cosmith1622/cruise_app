@@ -45,6 +45,7 @@ jobs:
 
       # Step B: Let Terraform create/manage the ECR repository
       - name: Terraform Init & Apply
+        working-directory: ./terraform
         run: |
           terraform init
           terraform apply -auto-approve
