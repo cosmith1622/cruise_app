@@ -44,10 +44,11 @@ jobs:
         uses: hashicorp/setup-terraform@v3
 
       # Step B: Let Terraform create/manage the ECR repository
-      - name: Terraform Init & Apply
+      - name: Terraform Init
         working-directory: ./terraform
         run: |
           terraform init
+          terraform apply -auto-approve
 
       # Step C: Log Docker into ECR using the assumed OIDC role
       - name: Log in to Amazon ECR
