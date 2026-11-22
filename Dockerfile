@@ -1,13 +1,12 @@
-FROM python:3.12-slim
+# Use the official AWS Lambda base image for Python 3.12
+FROM public.ecr.aws/lambda/python:3.12
 
-WORKDIR /app
+# Optional: Install dependencies if requirements.txt exists
+# COPY requirements.txt ${LAMBDA_TASK_ROOT}
+# RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Python packages
-#COPY requirements.txt .
-#RUN pip install --no-cache-dir -r requirements.txt
+# Copy application files into the Lambda task root directory
+COPY app.py ${LAMBDA_TASK_ROOT}
 
-# Copy checked-out code from GitHub Actions into the container
-COPY . .
-
-
-CMD ["/bin/bash"]
+# Set the CMD to your handler: <filename>.<function_name>
+CMD [ "app.lambda_handler" ]
