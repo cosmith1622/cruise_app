@@ -48,7 +48,6 @@ jobs:
         working-directory: ./terraform
         run: |
           terraform init
-          terraform apply -auto-approve
 
       # Step C: Log Docker into ECR using the assumed OIDC role
       - name: Log in to Amazon ECR
@@ -64,3 +63,9 @@ jobs:
         run: |
           docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+
+      # Step E: Let Terraform create/manage the ECR repository
+      - name: Terraform Apply
+        working-directory: ./terraform
+        run: |
+          terraform apply -auto-approve
