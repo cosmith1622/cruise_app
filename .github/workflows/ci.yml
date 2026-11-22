@@ -1,5 +1,6 @@
 name: Deploy Infra
-
+#remove the github extentions
+#added vs code extension again
 on:
   push:
     branches:
@@ -19,6 +20,16 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Extract Actual OIDC Sub Claim
+        run: |
+          # Safely parse the JWT payload without leaking private signatures
+          JWT_PAYLOAD=$(echo "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" | cut -d'.' -f2)
+          # Handle base64 padding issues if present
+          PADDING=$(expr 4 - length "$JWT_PAYLOAD" % 4)
+          if [ $PADDING -eq 4 ]; then PADDING=0; fi
+          printf "%s" "$JWT_PAYLOAD" | head -n 1 | base64 -d 2>/dev/null || true
+
+
       - name: Configure AWS Credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -27,3 +38,35 @@ jobs:
 
       - name: Check AWS Connection
         run: aws sts get-caller-identity
+
+      #Step A: install the hashicorp github plugin
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      # Step B: Let Terraform create/manage the ECR repository
+      - name: Terraform Init
+        working-directory: ./terraform
+        run: |
+          terraform init
+          terraform apply -auto-approve
+
+      # Step C: Log Docker into ECR using the assumed OIDC role
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Step D: Build and Push your container
+      - name: Build, tag, and push Docker image
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: cruise_app
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+
+      # Step E: Let Terraform create/manage the ECR repository
+      - name: Terraform Apply
+        working-directory: ./terraform
+        run: |
+          terraform apply -auto-approve -var="image_tag=${{ github.sha }}"
